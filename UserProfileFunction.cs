@@ -6,6 +6,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Data;
 using System.Text.Json;
 
 namespace LSC.OnlineCourse.Functions
@@ -15,8 +16,7 @@ namespace LSC.OnlineCourse.Functions
         private readonly ILogger<UserProfileFunction> _logger;
         private readonly IConfiguration configuration;
 
-        public UserProfileFunction(ILogger<UserProfileFunction> logger, 
-            IConfiguration configuration)
+        public UserProfileFunction(ILogger<UserProfileFunction> logger, IConfiguration configuration)
         {
             _logger = logger;
             this.configuration = configuration;
@@ -71,7 +71,8 @@ namespace LSC.OnlineCourse.Functions
                 }
 
                 // Check if UserProfile with given AdObjId exists
-                var userProfile = await learnSmartDbContext.UserProfiles.FirstOrDefaultAsync(u => u.AdObjId == adObjId);
+                var userProfile = await learnSmartDbContext.UserProfiles.Include(d => d.UserRoles).FirstOrDefaultAsync(u => u.AdObjId == adObjId);
+                var role = await learnSmartDbContext.Roles.FirstOrDefaultAsync(f => f.RoleName == "Student");
 
                 if (userProfile == null)
                 {
@@ -82,7 +83,10 @@ namespace LSC.OnlineCourse.Functions
                         DisplayName = profile.DisplayName,
                         FirstName = profile.FirstName,
                         LastName = profile.LastName,
-                        Email = profile.Email
+                        Email = profile.Email,
+                        UserRoles = new List<UserRole>() {
+                            new UserRole() { SmartAppId = 1, RoleId = role.RoleId}
+                        }
                     };
 
                     learnSmartDbContext.UserProfiles.Add(userProfile);
@@ -100,8 +104,8 @@ namespace LSC.OnlineCourse.Functions
                 await learnSmartDbContext.SaveChangesAsync();
 
                 //get user's roles here
-                var userRoles = await learnSmartDbContext.UserRoles.Include(i=>i.Role)
-                    .Where(u => u.UserId == userProfile.UserId).Select(s=>s.Role.RoleName).ToListAsync();
+                var userRoles = await learnSmartDbContext.UserRoles.Include(i => i.Role)
+                    .Where(u => u.UserId == userProfile.UserId).Select(s => s.Role.RoleName).ToListAsync();
 
                 userProfileResponse = new Profile()
                 {

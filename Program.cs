@@ -1,3 +1,5 @@
+
+using LSC.OnlineCourse.Functions.Email;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,6 +18,8 @@ var host = new HostBuilder()
         services.AddHttpClient(); // Register HttpClient
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
+        services.AddScoped<IEmailNotification, EmailNotification>();
+
     })
      .ConfigureLogging(logging =>
      {
