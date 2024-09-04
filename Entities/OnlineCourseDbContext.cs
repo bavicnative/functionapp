@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using LSC.OnlineCourse.Functions.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace LSC.OnlineCourse.Functions.Entities;
 
@@ -33,9 +34,13 @@ public partial class OnlineCourseDbContext : DbContext
 
     public virtual DbSet<SessionDetail> SessionDetails { get; set; }
 
+    public virtual DbSet<SmartApp> SmartApps { get; set; }
+
     public virtual DbSet<UserProfile> UserProfiles { get; set; }
 
     public virtual DbSet<UserRole> UserRoles { get; set; }
+
+    public virtual DbSet<VideoRequest> VideoRequests { get; set; }
 
     //All the table definitions are configured here based on our DB
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -64,8 +69,6 @@ public partial class OnlineCourseDbContext : DbContext
                 .HasConstraintName("FK_Course_Instructor");
         });
 
-        //These helps EF Core to know where what we try to insert/update is valid or not. e.g. if you try to insert 
-        //a record with CategoryName more than 50 characters, it will throw error instead of going to DB and come back with error
         modelBuilder.Entity<CourseCategory>(entity =>
         {
             entity.HasKey(e => e.CategoryId).HasName("PK_CourseCategory_CategoryId");
@@ -174,6 +177,15 @@ public partial class OnlineCourseDbContext : DbContext
                 .HasConstraintName("FK_SessionDetails_Course");
         });
 
+        modelBuilder.Entity<SmartApp>(entity =>
+        {
+            entity.HasKey(e => e.SmartAppId).HasName("PK_SmartApp_SmartAppId");
+
+            entity.ToTable("SmartApp");
+
+            entity.Property(e => e.AppName).HasMaxLength(50);
+        });
+
         modelBuilder.Entity<UserProfile>(entity =>
         {
             entity.HasKey(e => e.UserId).HasName("PK_UserProfile_UserId");
@@ -200,10 +212,35 @@ public partial class OnlineCourseDbContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_UserRole_Roles");
 
+            entity.HasOne(d => d.SmartApp).WithMany(p => p.UserRoles)
+                .HasForeignKey(d => d.SmartAppId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_UserRole_SmartApp");
+
             entity.HasOne(d => d.User).WithMany(p => p.UserRoles)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_UserRole_UserProfile");
+        });
+
+        modelBuilder.Entity<VideoRequest>(entity =>
+        {
+            entity.HasKey(e => e.VideoRequestId).HasName("PK_VideoRequest_VideoRequestId");
+
+            entity.ToTable("VideoRequest");
+
+            entity.Property(e => e.RequestDescription).HasMaxLength(4000);
+            entity.Property(e => e.Response).HasMaxLength(4000);
+            entity.Property(e => e.ShortTitle).HasMaxLength(200);
+            entity.Property(e => e.SubTopic).HasMaxLength(50);
+            entity.Property(e => e.RequestStatus).HasMaxLength(50);
+            entity.Property(e => e.Topic).HasMaxLength(50);
+            entity.Property(e => e.VideoUrls).HasMaxLength(2000);
+
+            entity.HasOne(d => d.User).WithMany(p => p.VideoRequests)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_VideoRequest_UserProfile");
         });
 
         OnModelCreatingPartial(modelBuilder);
