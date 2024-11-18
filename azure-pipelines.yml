@@ -8,10 +8,10 @@ trigger:
 
 variables:
   # Azure Resource Manager connection created during pipeline creation
-  azureSubscription: '27fd7675-bd22-42ae-bf11-7b57fd606ceb'
+  azureSubscription: '16999257-5587-42f7-9bef-13d08dc3281e'
 
   # Function app name
-  functionAppName: 'smartlearnbykarthik-functions'
+  functionAppName: 'funcapp132'
 
   # Agent VM image name
   vmImageName: 'windows-2019'
